@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tank-monitor
+  name: tank-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tank-monitor
+  template:
+    metadata:
+      labels:
+        app: tank-monitor
+    spec:
+      containers:
+      - env:
+        - name: SENSOR
+          value: taylor_water_tank_level1
+        image: syoder89/tank-monitor
+        name: tank-monitor
