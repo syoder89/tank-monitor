@@ -11,7 +11,7 @@ import (
 )
 
 type TankMsg struct {
-	Distance uint64
+	Distance float64
 }
 
 var tmsg TankMsg
@@ -53,7 +53,7 @@ func main() {
 		panic(token.Error())
 	}
 
-	metrics.NewGauge(`distance`, func() uint64 { return tmsg.Distance })
+	metrics.NewGauge(`distance`, func() float64 { return tmsg.Distance })
 
 	sub(client)
 
