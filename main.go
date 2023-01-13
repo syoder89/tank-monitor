@@ -25,7 +25,7 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
 	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
 	json.Unmarshal([]byte(msg.Payload()), &tmsg)
 	fmt.Println(tmsg)
-	vmclient.Push(vmPushURL, 20*time.Second, `sensor="`+sensor+`"`, false)
+//	vmclient.Push(vmPushURL, 20*time.Second, `sensor="`+sensor+`"`, false)
 }
 
 func main() {
@@ -65,8 +65,8 @@ func main() {
 // Received message: {"Time":"2022-08-07T02:39:55","ENERGY":{"TotalStartTime":"2022-08-02T20:37:49","Total":0.006,"Yesterday":0.000,"Today":0.000,"Period": 0,"Power": 0,"ApparentPower": 0,"ReactivePower": 0,"Factor":0.00,"Voltage":121,"Current":0.000}} from topic: tele/taylor_water/SENSOR
 
 func sub(client mqtt.Client) {
-//	topic := "#"
-	topic := "tele/"+sensor+"/SENSOR"
+	topic := "#"
+//	topic := "tele/"+sensor+"/SENSOR"
 	token := client.Subscribe(topic, 1, nil)
 	token.Wait()
 	fmt.Printf("Subscribed to topic: %s\n", topic)
