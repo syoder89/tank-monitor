@@ -12,6 +12,8 @@ import (
 
 type TankMsg struct {
 	Distance float64
+	Temperature float64
+	Humidity float64
 }
 
 var tmsg TankMsg
@@ -54,6 +56,8 @@ func main() {
 	}
 
 	metrics.NewGauge(`distance`, func() float64 { return tmsg.Distance })
+	metrics.NewGauge(`temperature`, func() float64 { return tmsg.Temperature })
+	metrics.NewGauge(`humidity`, func() float64 { return tmsg.Humidity })
 
 	sub(client)
 
@@ -62,7 +66,7 @@ func main() {
 	}
 }
 
-// Received message: {"Time":"2022-08-07T02:39:55","ENERGY":{"TotalStartTime":"2022-08-02T20:37:49","Total":0.006,"Yesterday":0.000,"Today":0.000,"Period": 0,"Power": 0,"ApparentPower": 0,"ReactivePower": 0,"Factor":0.00,"Voltage":121,"Current":0.000}} from topic: tele/taylor_water/SENSOR
+// Received message: {"Distance": 1000,"Temperature": 23.760967,"Humidity": 33.665981} from topic: tele/taylor_water_tank_level1/SENSOR
 
 func sub(client mqtt.Client) {
 //	topic := "#"
