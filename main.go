@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"time"
 	"os"
+	"os/signal"
+	"syscall"
 	"encoding/json"
+	"flag"
 	"github.com/VictoriaMetrics/metrics"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/syoder89/tank-monitor/vmclient"
@@ -23,7 +26,7 @@ var broker = "tcp://mosquitto:1883"
 // http://172.20.1.4:8428/api/v1/import/prometheus
 var vmPushURL = "http://victoria-metrics-victoria-metrics-single-server:8428/api/v1/import/prometheus"
 
-var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+func onMessageReceived(client mqtt.Client, msg mqtt.Message) {
 	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
 	json.Unmarshal([]byte(msg.Payload()), &tmsg)
 	fmt.Println(tmsg)
@@ -52,14 +55,10 @@ func main() {
 	opts.SetClientID("monitor-"+sensor)
 	opts.SetUsername("emqx")
 	opts.SetPassword("public")
-	opts.SetDefaultPublishHandler(messagePubHandler)
 	opts.SetCleanSession(true)
 	opts.SetOrderMatters(false)
-	opts.KeepAlive(30)
-	client := mqtt.NewClient(opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		panic(token.Error())
-	}
+	opts.SetKeepAlive(30)
+	qos := flag.Int("qos", 0, "The QoS to subscribe to messages at")
 
 	metrics.NewGauge(`distance`, func() float64 { return tmsg.Distance })
 	metrics.NewGauge(`temperature`, func() float64 { return tmsg.Temperature })
@@ -67,7 +66,7 @@ func main() {
 
 	topic := "tele/"+sensor+"/SENSOR"
 	opts.OnConnect = func(c mqtt.Client) {
-		if token := c.Subscribe(*topic, byte(*qos), onMessageReceived); token.Wait() && token.Error() != nil {
+		if token := c.Subscribe(topic, byte(*qos), onMessageReceived); token.Wait() && token.Error() != nil {
 			panic(token.Error())
 		}
 		fmt.Printf("Subscribed to topic: %s\n", topic)
@@ -77,7 +76,7 @@ func main() {
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	} else {
-		fmt.Printf("Connected to %s\n", *broker)
+		fmt.Printf("Connected to %s\n", broker)
 	}
 
 	<-c
