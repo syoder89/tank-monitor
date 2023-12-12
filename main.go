@@ -31,6 +31,9 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
 }
 
 func main() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
 	if val, ok := os.LookupEnv("SENSOR"); ok {
 		sensor = val
 	} else {
@@ -50,6 +53,9 @@ func main() {
 	opts.SetUsername("emqx")
 	opts.SetPassword("public")
 	opts.SetDefaultPublishHandler(messagePubHandler)
+	opts.SetCleanSession(true)
+	opts.SetOrderMatters(false)
+	opts.KeepAlive(30)
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
@@ -59,19 +65,23 @@ func main() {
 	metrics.NewGauge(`temperature`, func() float64 { return tmsg.Temperature })
 	metrics.NewGauge(`humidity`, func() float64 { return tmsg.Humidity })
 
-	sub(client)
-
-	for true {
-		time.Sleep(time.Second)
+	topic := "tele/"+sensor+"/SENSOR"
+	opts.OnConnect = func(c MQTT.Client) {
+		if token := c.Subscribe(*topic, byte(*qos), onMessageReceived); token.Wait() && token.Error() != nil {
+			panic(token.Error())
+		}
+		fmt.Printf("Subscribed to topic: %s\n", topic)
 	}
+
+	client := MQTT.NewClient(opts)
+	if token := client.Connect(); token.Wait() && token.Error() != nil {
+		panic(token.Error())
+	} else {
+		fmt.Printf("Connected to %s\n", *broker)
+	}
+
+	<-c
 }
 
 // Received message: {"Distance": 1000,"Temperature": 23.760967,"Humidity": 33.665981} from topic: tele/taylor_water_tank_level1/SENSOR
 
-func sub(client mqtt.Client) {
-//	topic := "#"
-	topic := "tele/"+sensor+"/SENSOR"
-	token := client.Subscribe(topic, 1, nil)
-	token.Wait()
-	fmt.Printf("Subscribed to topic: %s\n", topic)
-}
