@@ -66,14 +66,14 @@ func main() {
 	metrics.NewGauge(`humidity`, func() float64 { return tmsg.Humidity })
 
 	topic := "tele/"+sensor+"/SENSOR"
-	opts.OnConnect = func(c MQTT.Client) {
+	opts.OnConnect = func(c mqtt.Client) {
 		if token := c.Subscribe(*topic, byte(*qos), onMessageReceived); token.Wait() && token.Error() != nil {
 			panic(token.Error())
 		}
 		fmt.Printf("Subscribed to topic: %s\n", topic)
 	}
 
-	client := MQTT.NewClient(opts)
+	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	} else {
