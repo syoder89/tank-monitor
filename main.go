@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"time"
 	"os"
@@ -49,6 +50,7 @@ func main() {
 	if val, ok := os.LookupEnv("VM_PUSH_URL"); ok {
 		vmPushURL = val
 	}
+	qos := flag.Int("qos", 0, "The QoS to subscribe to messages at")
 
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(broker)
@@ -57,8 +59,9 @@ func main() {
 	opts.SetPassword("public")
 	opts.SetCleanSession(true)
 	opts.SetOrderMatters(false)
-	opts.SetKeepAlive(30)
-	qos := flag.Int("qos", 0, "The QoS to subscribe to messages at")
+	opts.SetKeepAlive(30 * time.Second)
+	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
+	opts.SetTLSConfig(tlsConfig)
 
 	metrics.NewGauge(`distance`, func() float64 { return tmsg.Distance })
 	metrics.NewGauge(`temperature`, func() float64 { return tmsg.Temperature })
