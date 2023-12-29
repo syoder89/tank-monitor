@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: syoder89/tank-monitor
+  name: tank-monitor
+  namespace: argocd
+spec:
+  destination:
+    namespace: taylor-monitoring
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: deploy/
+    repoURL: https://github.com/syoder89/tank-monitor.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      selfHeal: true
